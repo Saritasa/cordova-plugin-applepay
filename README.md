@@ -20,15 +20,13 @@ exposes the `window.ApplePay` global in the browser.
 ## Compatibility
 
 - iOS 9 (using newer iOS9 only APIs)
-- iOS 8 (using initial Apple Pay APIs from iOS8 that are deprecated in iOS9)
-- iOS 7 and older (no Apple Pay, but doesn't affect code)
 - Requires Cordova 6 running at least iOS Platform 4.1.1
 
 ## Methods
 The methods available all return promises, or accept success and error callbacks.
 - ApplePay.canMakePayments
 - ApplePay.makePaymentRequest
-- ApplePay.completeLastTransaction
+- ApplePay.completeAuthorizationTransaction
 
 ## ApplePay.canMakePayments
 Detects if the current device supports Apple Pay and has any *capable* cards registered.
@@ -64,7 +62,30 @@ ApplePay.makePaymentRequest(order)
     });
 ```
 
-### Example Response
+### Responses
+
+Three kinds of responses:
+- When an user did authorize payment. You should call `ApplePay.completeAuthorizationTransaction` in order to finish.
+```json
+{
+    "action": "didAuthorizePayment",
+    "payment": ...
+}
+```
+- When an user did select shipping contact. You should call `ApplePay.completeShippingContactTransaction` in order to update the info.
+```json
+{
+    "action": "didSelectShippingContact",
+    "shippingContact": ...
+}
+```
+- When an user did select payment method. You should call `ApplePay.completePaymentMethodTransaction` in order to update the info.
+```json
+{
+    "action": "didSelectPaymentMethod",
+    "paymentMethod": ...
+}
+```
 
 The `paymentResponse` is an object with the keys that contain the token itself,
 this is what you'll need to pass along to your payment processor. Also, if you requested
@@ -95,15 +116,15 @@ billing or shipping addresses, this information is also included.
 }
 ```
 
-## ApplePay.completeLastTransaction
+## ApplePay.completeAuthorizationTransaction
 Once the makePaymentRequest has been resolved successfully, the device will be waiting for a completion event.
 This means, that the application must proceed with the token authorisation and return a success, failure, or other validation error. Once this has been passed back, the Apple Pay sheet will be dismissed via an animation.
 
 ```
-ApplePay.completeLastTransaction('success');
+ApplePay.completeAuthorizationTransaction('success');
 ```
 
-You can dismiss or invalidate the Apple Pay sheet by calling `completeLastTransaction` with a status string which can be `success`, `failure`, `invalid-billing-address`, `invalid-shipping-address`, `invalid-shipping-contact`, `require-pin`, `incorrect-pin`, `locked-pin`.
+You can dismiss or invalidate the Apple Pay sheet by calling `completeAuthorizationTransaction` with a status string which can be `success`, `failure`, `invalid-billing-address`, `invalid-shipping-address`, `invalid-shipping-contact`, `require-pin`, `incorrect-pin`, `locked-pin`.
 
 ### Payment Flow Example
 
@@ -164,11 +185,11 @@ ApplePay.makePaymentRequest(
         // MyPaymentProvider.authorizeApplePayToken(token.paymentData)
         //    .then((captureStatus) => {
         //        // Displays the 'done' green tick and closes the sheet.
-        //        ApplePay.completeLastTransaction('success');
+        //        ApplePay.completeAuthorizationTransaction('success');
         //    })
         //    .catch((err) => {
         //        // Displays the 'failed' red cross.
-        //        ApplePay.completeLastTransaction('failure');
+        //        ApplePay.completeAuthorizationTransaction('failure');
         //    });
 
 

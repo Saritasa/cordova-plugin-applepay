@@ -118,7 +118,7 @@ typedef void (^APPaymentMethodBlock)(NSArray<PKPaymentSummaryItem *> * _Nonnull)
     [self.viewController presentViewController:authVC animated:YES completion:nil];
 }
 
-- (void)completeLastTransaction:(CDVInvokedUrlCommand*)command
+- (void)completeAuthorizationTransaction:(CDVInvokedUrlCommand *)command
 {
     if (self.paymentAuthorizationBlock) {
 
@@ -130,8 +130,19 @@ typedef void (^APPaymentMethodBlock)(NSArray<PKPaymentSummaryItem *> * _Nonnull)
 
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: @"Payment status applied."];
         [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-        
     }
+
+    self.paymentAuthorizationBlock = nil;
+}
+
+- (void)completeShippingContactTransaction:(CDVInvokedUrlCommand *)command
+{
+
+}
+
+- (void)completePaymentMethodTransaction:(CDVInvokedUrlCommand *)command
+{
+
 }
 
 #pragma mark - Private

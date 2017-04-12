@@ -5,8 +5,13 @@
 
 @interface CDVApplePay : CDVPlugin
 
-- (void)makePaymentRequest:(CDVInvokedUrlCommand*)command;
-- (void)canMakePayments:(CDVInvokedUrlCommand*)command;
-- (void)completeLastTransaction:(CDVInvokedUrlCommand*)command;
+- (void)canMakePayments:(CDVInvokedUrlCommand *)command;
+- (void)makePaymentRequest:(CDVInvokedUrlCommand *)command;
+
+- (void)completeAuthorizationTransaction:(CDVInvokedUrlCommand *)command;
+
+- (void)completeShippingContactTransaction:(CDVInvokedUrlCommand *)command;
+
+- (void)completePaymentMethodTransaction:(CDVInvokedUrlCommand *)command;
 
 @end

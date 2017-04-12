@@ -56,7 +56,7 @@ var ApplePay = {
      * @param {Function} [errorCallback] - Optional error callback, recieves message object.
      * @returns {Promise}
      */
-    completeLastTransaction: function(status, successCallback, errorCallback) {
+    completeAuthorizationTransaction: function(status, successCallback, errorCallback) {
 
         return new Promise(function(resolve, reject) {
             exec(function(message) {
@@ -65,7 +65,7 @@ var ApplePay = {
             }, function(message) {
                 executeCallback(errorCallback, message);
                 reject(message);
-            }, 'ApplePay', 'completeLastTransaction', [status]);
+            }, 'ApplePay', 'completeAuthorizationTransaction', [status]);
         });
 
     }
