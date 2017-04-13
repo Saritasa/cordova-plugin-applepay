@@ -27,6 +27,8 @@ The methods available all return promises, or accept success and error callbacks
 - ApplePay.canMakePayments
 - ApplePay.makePaymentRequest
 - ApplePay.completeAuthorizationTransaction
+- ApplePay.completeShippingContactTransaction
+- ApplePay.completePaymentMethodTransaction
 
 ## ApplePay.canMakePayments
 Detects if the current device supports Apple Pay and has any *capable* cards registered.
@@ -64,22 +66,22 @@ ApplePay.makePaymentRequest(order)
 
 ### Responses
 
-Three kinds of responses:
-- When an user did authorize payment. You should call `ApplePay.completeAuthorizationTransaction` in order to finish.
+`ApplePay.makePaymentRequest` can receive three kinds of responses:
+- When an user has authorized payment. You should call `ApplePay.completeAuthorizationTransaction` in order to finish.
 ```json
 {
     "action": "didAuthorizePayment",
     "payment": ...
 }
 ```
-- When an user did select shipping contact. You should call `ApplePay.completeShippingContactTransaction` in order to update the info.
+- When an user has selected shipping contact. You should call `ApplePay.completeShippingContactTransaction` in order to update the info.
 ```json
 {
     "action": "didSelectShippingContact",
     "shippingContact": ...
 }
 ```
-- When an user did select payment method. You should call `ApplePay.completePaymentMethodTransaction` in order to update the info.
+- When an user has selected payment method. You should call `ApplePay.completePaymentMethodTransaction` in order to update the info.
 ```json
 {
     "action": "didSelectPaymentMethod",
@@ -87,50 +89,82 @@ Three kinds of responses:
 }
 ```
 
-The `paymentResponse` is an object with the keys that contain the token itself,
+The `payment` is an object with the keys that contain the token itself,
 this is what you'll need to pass along to your payment processor. Also, if you requested
 billing or shipping addresses, this information is also included.
 
-```
+```json
 {
-    "shippingAddressState": "London",
-    "shippingCountry": "United Kingdom",
-    "shippingISOCountryCode": "gb",
-    "billingAddressCity": "London",
-    "billingISOCountryCode": "gb",
-    "shippingNameLast": "Name",
     "paymentData": "<BASE64 ENCODED TOKEN WILL APPEAR HERE>",
-    "shippingNameFirst": "First",
-    "billingAddressState": "London",
-    "billingAddressStreet": "Street 1\n",
-    "billingNameFirst": "First",
-    "billingPostalCode": "POST CODE",
-    "shippingPostalCode": "POST CODE",
-    "shippingAddressStreet": "Street Line 1\nStreet Line 2",
-    "billingNameLast": "NAME",
-    "billingSupplementarySubLocality": "",
-    "billingCountry": "United Kingdom",
-    "shippingAddressCity": "London",
-    "shippingSupplementarySubLocality": "",
-    "transactionIdentifier": "Simulated Identifier"
+    "transactionIdentifier": "Simulated Identifier",
+    "billingContact": {
+        "addressCity": "London",
+        "ISOCountryCode": "gb",
+        "addressState": "London",
+        "addressStreet": "Street 1\n",
+        "nameFirst": "First",
+        "postalCode": "POST CODE",
+        "nameLast": "NAME",
+        "country": "United Kingdom",
+        "supplementarySubLocality": ""
+    },
+    "shippingContact": {
+        "addressState": "London",
+        "country": "United Kingdom",
+        "ISOCountryCode": "gb",
+        "nameLast": "Name",
+        "nameFirst": "First",
+        "postalCode": "POST CODE",
+        "addressStreet": "Street Line 1\nStreet Line 2",
+        "addressCity": "London",
+        "supplementarySubLocality": ""
+    }
 }
 ```
 
+The `shippingContanct` is an object that contains the same fields as the `payment.shippingContact` object.
+
+The `paymentMethod` is an object that contains payment method information.
+
+```json
+{
+    "displayName": "Visa…1233",
+    "network": "Visa",
+    "type": "credit"
+}
+```
+
+Valid values for `type` field are: `debit`, `credit`, `prepaid`, `store`, `unknown`.
+
 ## ApplePay.completeAuthorizationTransaction
 Once the makePaymentRequest has been resolved successfully, the device will be waiting for a completion event.
-This means, that the application must proceed with the token authorisation and return a success, failure, or other validation error. Once this has been passed back, the Apple Pay sheet will be dismissed via an animation.
+This means, that the application must proceed with the token authorisation and return a success, failure, or other validation error. Once this has been passed back, the Apple Pay sheet will be dismissed via an animation. You should call this method if you receive `"action": "didAuthorizePayment"` in the success callback of `ApplePay.makePaymentRequest` method.
 
-```
+```js
 ApplePay.completeAuthorizationTransaction('success');
 ```
 
 You can dismiss or invalidate the Apple Pay sheet by calling `completeAuthorizationTransaction` with a status string which can be `success`, `failure`, `invalid-billing-address`, `invalid-shipping-address`, `invalid-shipping-contact`, `require-pin`, `incorrect-pin`, `locked-pin`.
 
+## ApplePay.completeShippingContactTransaction
+You should call this method if you receive `"action": "didSelectShippingContact"` in the success callback of `ApplePay.makePaymentRequest` method. The method accepts an object that should contain payment authorization status (valid values are the same as in `ApplePay.completeAuthorizationTransaction`), new payment shipping methods (format the same as in `ApplePay.makePaymentRequest`) and payment summary items (format the same as in `ApplePay.makePaymentRequest`).
+
+```js
+ApplePay.completeShippingContactTransaction({'status': status, 'shippingMethods': methods, 'items': items});
+```
+
+## ApplePay.completePaymentMethodTransaction
+You should call this method if you receive `"action": "didSelectPaymentMethod"` in the success callback of `ApplePay.makePaymentRequest` method. The method accepts an object that should contain payment summary items (format the same as in `ApplePay.makePaymentRequest`).
+
+```js
+ApplePay.completePaymentMethodTransaction({'items': items});
+```
+
 ### Payment Flow Example
 
 The order request object closely follows the format of the `PKPaymentRequest` class and thus its [documentation](https://developer.apple.com/library/ios/documentation/PassKit/Reference/PKPaymentRequest_Ref/index.html#//apple_ref/occ/cl/PKPaymentRequest) will make excellent reading.
 
-```
+```js
 ApplePay.makePaymentRequest(
     {
           items: [
@@ -174,9 +208,10 @@ ApplePay.makePaymentRequest(
           shippingAddressRequirement: 'none',
           shippingType: 'shipping'
     })
-    .then((paymentResponse) => {
-        // The user has authorized the payment.
+    .then((response) => {
+        // You should check the `response.action` and act appropriately.
 
+        // When the user has authorized the payment:
         // Handle the token, asynchronously, i.e. pass to your merchant bank to
         // action the payment, then once finished, depending on the outcome:
 
