@@ -68,7 +68,7 @@ var ApplePay = {
             }, 'ApplePay', 'completeAuthorizationTransaction', [status]);
         });
 
-    }
+    },
 
     /**
      * Updates payment shipping methods and summary items.
@@ -90,7 +90,7 @@ var ApplePay = {
             }, 'ApplePay', 'completeShippingContactTransaction', [object]);
         });
 
-    }
+    },
 
     /**
      * Updates payment summary items.
