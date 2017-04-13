@@ -123,12 +123,12 @@ typedef void (^APPaymentMethodBlock)(NSArray<PKPaymentSummaryItem *> * _Nonnull)
     if (self.paymentAuthorizationBlock) {
 
         NSString *paymentAuthorizationStatusString = [command.arguments objectAtIndex:0];
-        NSLog(@"ApplePay completeLastTransaction == %@", paymentAuthorizationStatusString);
+        NSLog(@"ApplePay completeAuthorizationTransaction == %@", paymentAuthorizationStatusString);
 
         PKPaymentAuthorizationStatus paymentAuthorizationStatus = [self paymentAuthorizationStatusFromArgument:paymentAuthorizationStatusString];
         self.paymentAuthorizationBlock(paymentAuthorizationStatus);
 
-        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: @"Payment status applied."];
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Payment status applied."];
         [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
     }
 
@@ -137,12 +137,34 @@ typedef void (^APPaymentMethodBlock)(NSArray<PKPaymentSummaryItem *> * _Nonnull)
 
 - (void)completeShippingContactTransaction:(CDVInvokedUrlCommand *)command
 {
+    if (self.shippingContactBlock) {
+        PKPaymentAuthorizationStatus status = [self paymentAuthorizationStatusFromArgument:command.arguments[0][@"status"]];
+        NSArray *methods = [self shippingMethodsFromArguments:command.arguments];
+        NSArray *items = [self paymentSummaryItemsFromArguments:command.arguments];
 
+        self.shippingContactBlock(status, methods, items);
+
+        NSString *message = @"Payment status, methods and summary items applied.";
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }
+
+    self.shippingContactBlock = nil;
 }
 
 - (void)completePaymentMethodTransaction:(CDVInvokedUrlCommand *)command
 {
+    if (self.paymentMethodBlock) {
+        NSArray *items = [self paymentSummaryItemsFromArguments:command.arguments];
 
+        self.paymentMethodBlock(items);
+
+        NSString *message = @"Payment summary items applied.";
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:message];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }
+
+    self.paymentMethodBlock = nil;
 }
 
 #pragma mark - Private
