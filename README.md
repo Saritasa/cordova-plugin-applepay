@@ -254,8 +254,6 @@ properties are:
 ## Limitations and TODOs
 * *Supported Payment Networks hard coded* (Visa, Mastercard, American Express) - This should be updated to be passed along in the order, but is rarely changed and trivial to alter in code.
 * *Merchant Capabilities hard coded (3DS)* - This should be updated to be passed along in the order, but is rarely changed and trivial to alter in code.
-* *Event binds for delivery method selector* - An event can be raised when the customer
-selects different delivery options, so the merchant can update the delivery charges.
 
 ## License
 
