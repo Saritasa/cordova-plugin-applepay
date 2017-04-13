@@ -70,6 +70,49 @@ var ApplePay = {
 
     }
 
+    /**
+     * Updates payment shipping methods and summary items.
+     * @param {Object} [object] - an object that should contain a payment authorization status ('status'),
+     * new shipping methods ('shippingMethods') and new summary items ('items').
+     * @param {Function} [successCallback] - Optional success callback, recieves message object.
+     * @param {Function} [errorCallback] - Optional error callback, recieves message object.
+     * @returns {Promise}
+     */
+    completeShippingContactTransaction: function(object, successCallback, errorCallback) {
+
+        return new Promise(function(resolve, reject) {
+            exec(function(message) {
+                executeCallback(successCallback, message);
+                resolve(message);
+            }, function(message) {
+                executeCallback(errorCallback, message);
+                reject(message);
+            }, 'ApplePay', 'completeShippingContactTransaction', [object]);
+        });
+
+    }
+
+    /**
+     * Updates payment summary items.
+     * @param {Object} [object] - an object that should contain new summary items ('items').
+     * @param {Function} [successCallback] - Optional success callback, recieves message object.
+     * @param {Function} [errorCallback] - Optional error callback, recieves message object.
+     * @returns {Promise}
+     */
+    completePaymentMethodTransaction: function(object, successCallback, errorCallback) {
+
+        return new Promise(function(resolve, reject) {
+            exec(function(message) {
+                executeCallback(successCallback, message);
+                resolve(message);
+            }, function(message) {
+                executeCallback(errorCallback, message);
+                reject(message);
+            }, 'ApplePay', 'completePaymentMethodTransaction', [object]);
+        });
+
+    }
+
 };
 
 module.exports = ApplePay;
